@@ -2,26 +2,30 @@
   <div class="p-4">
     <div class="flex justify-between mb-4">
       <h2>Покупатели</h2>
-
       <Button label="Добавить" icon="pi pi-plus" @click="showCreateDialog = true" />
     </div>
-    <SearchForm :fields="buyersFields" :searchHandlers="searchHandlers"/>
-    <DataTable v-if="buyers.length > 0" :value="buyers" :paginator="true" :rows="10" :totalRecords="total" @page="onPage">
+    <SearchForm
+        :fields="buyersFields"
+        :validation-schema="validationSchema"
+        :current-page="buyersStore.currentPage"
+        :total-items="buyersStore.total"
+        :items-per-page="buyersStore.limit"
+        @page-changed="formHandlers.handlePageChange"
+        @search-form="formHandlers.handleSearchForm"
+        @search-string="formHandlers.handleSearchString"
+    />
+    <DataTable v-if="buyersStore.buyers.length > 0" stripedRows :value="buyersStore.buyers" paginator :rows="buyersStore.limit" :rowsPerPageOptions="[10, 25, 100]" :totalRecords="buyersStore.total" @page="onPage">
       <Column field="id" header="ID" sortable></Column>
       <Column field="name" header="Имя" sortable></Column>
-      <Column field="numberName" header="Номер" sortable></Column>
       <Column field="emails" header="Email" :body="formatEmails"></Column>
       <Column field="phones" header="Телефоны" :body="formatPhones"></Column>
+      <Column field="comments" header="Комментарии" :body="formatComments"></Column>
       <Column header="Действия" :body="actionBody" style="width: 150px;"></Column>
     </DataTable>
 
     <div v-else>
       Пока пусто
     </div>
-
-
-    <div class="card flex flex-col md:flex-row gap-4">
-
 
     <!-- Диалог Создания Покупателя -->
     <Dialog header="Добавить Покупателя" v-model:visible="showCreateDialog" modal class="w-4/5">
@@ -42,57 +46,57 @@
 
         <!-- Emails -->
         <div class="card flex flex-col md:flex-row gap-4">
-        <div v-for="(email, index) in newBuyer.emails" :key="index" class="field">
-          <FormKit
-              label="Email"
-              type="primeInputText"
-              name="emails"
-              id="emails"
-              validation="required|email"
-              v-model="newBuyer.emails[index]"
-          />
+          <div v-for="(email, index) in newBuyer.emails" :key="index" class="field">
+            <FormKit
+                label="Email"
+                type="primeInputText"
+                name="emails"
+                id="emails"
+                validation="required|email"
+                v-model="newBuyer.emails[index]"
+            />
+            <Button
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger"
+                v-if="newBuyer.emails.length > 1"
+                @click="removeField('emails', index)"
+            />
+          </div>
           <Button
-              icon="pi pi-trash"
-              class="p-button-text p-button-danger"
-              v-if="newBuyer.emails.length > 1"
-              @click="removeField('emails', index)"
+              type="button"
+              label="Добавить Email"
+              icon="pi pi-plus"
+              class="p-button-text"
+              @click="addField('emails')"
           />
-        </div>
-        <Button
-            type="button"
-            label="Добавить Email"
-            icon="pi pi-plus"
-            class="p-button-text"
-            @click="addField('emails')"
-        />
         </div>
 
         <!-- Phones -->
         <div class="card flex flex-col md:flex-row gap-4">
-        <div v-for="(phone, index) in newBuyer.phones" :key="index" class="field">
-          <FormKit
-              type="primeInputMask"
-              mask="+7 (999) 999-99-99"
-              label="Телефон"
-              name="phones"
-              id="phones"
-              validation="required"
-              v-model="newBuyer.phones[index]"
-          />
+          <div v-for="(phone, index) in newBuyer.phones" :key="index" class="field">
+            <FormKit
+                type="primeInputMask"
+                mask="+7 (999) 999-99-99"
+                label="Телефон"
+                name="phones"
+                id="phones"
+                validation="required"
+                v-model="newBuyer.phones[index]"
+            />
+            <Button
+                icon="pi pi-trash"
+                class="p-button-text p-button-danger"
+                v-if="newBuyer.phones.length > 1"
+                @click="removeField('phones', index)"
+            />
+          </div>
           <Button
-              icon="pi pi-trash"
-              class="p-button-text p-button-danger"
-              v-if="newBuyer.phones.length > 1"
-              @click="removeField('phones', index)"
+              type="button"
+              label="Добавить Телефон"
+              icon="pi pi-plus"
+              class="p-button-text"
+              @click="addField('phones')"
           />
-        </div>
-        <Button
-            type="button"
-            label="Добавить Телефон"
-            icon="pi pi-plus"
-            class="p-button-text"
-            @click="addField('phones')"
-        />
         </div>
 
         <!-- Addresses -->
@@ -152,7 +156,7 @@
     </Dialog>
 
     <!-- Диалог Редактирования Покупателя -->
-    <Dialog header="Редактировать Покупателя" :visible="showEditDialog" @hide="showEditDialog = false" modal>
+    <Dialog header="Редактировать Покупателя" v-model:visible="showEditDialog" modal>
       <FormKit
           type="form"
           @submit="handleUpdate"
@@ -213,22 +217,19 @@
       </FormKit>
     </Dialog>
   </div>
-  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import {type Buyer, useBuyersStore} from '~/stores/buyers'
 import { useToast } from 'primevue/usetoast'
-import {normalizePhoneNumber} from "~/pages/buyers/normalizePhone";
-import {buyersFields, handleBuyersSearchForm, searchHandlers} from "~/pages/buyers/searchBuyers";
+import { normalizePhoneNumber } from "~/pages/buyers/normalizePhone"
+import {buyersFields, formHandlers} from "~/pages/buyers/searchBuyers" // Предполагается, что у вас есть файл, экспортирующий buyersFields
+import SearchForm from '~/components/SearchForm.vue' // Путь к вашему универсальному SearchForm
+import Pagination from '~/components/Pagination.vue' // Путь к вашему компоненту Pagination
 
 const buyersStore = useBuyersStore()
 const toast = useToast()
-
-const buyers = ref<Buyer[]>([])
-const total = ref(0)
-const currentPage = ref(1)
 
 const showCreateDialog = ref(false)
 const showEditDialog = ref(false)
@@ -241,19 +242,26 @@ const newBuyer = ref({
   comments: [''],
 })
 
-const selectedBuyer = ref<Buyer | null>(null)
+const selectedBuyer = ref<Buyer>({
+      id: 0,
+      name: '',
+      emails: [''],
+      phones: [''],
+      address: [''],
+      comments: [''],
+    })
 
 const onPage = (event: any) => {
-  currentPage.value = event.page + 1
-  buyersStore.fetchBuyers(currentPage.value, event.rows)
+  buyersStore.limit = event.rows
+  buyersStore.currentPage = event.page + 1
 }
 
-// Универсальный метод для добавления элемента в массив
+
+
 const addField = (field: 'emails' | 'phones' | 'address' | 'comments') => {
   newBuyer.value[field].push('')
 }
 
-// Универсальный метод для удаления элемента из массива по индексу
 const removeField = (field: 'emails' | 'phones' | 'address' | 'comments', index: number) => {
   newBuyer.value[field].splice(index, 1)
 }
@@ -263,15 +271,14 @@ const handleCreate = async () => {
     // Нормализуем каждый телефон перед отправкой
     const phones = newBuyer.value.phones
         .map(phone => normalizePhoneNumber(phone))
-        .filter(phone => phone !== null); // Убираем некорректные номера
+        .filter(phone => phone !== null)
 
     if (phones.length !== newBuyer.value.phones.length) {
-      toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Некоторые номера телефонов некорректны' });
-      return;
+      toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Некоторые номера телефонов некорректны' })
+      return
     }
 
-    // Обновляем список телефонов перед отправкой
-    newBuyer.value.phones = phones as string[];
+    newBuyer.value.phones = phones as string[]
 
     await buyersStore.createBuyer(newBuyer.value)
     toast.add({ severity: 'success', summary: 'Успех', detail: 'Покупатель создан' })
@@ -281,8 +288,9 @@ const handleCreate = async () => {
       emails: [''],
       phones: [''],
       address: [''],
+      comments: [''],
     }
-    await buyersStore.fetchBuyers(currentPage.value, 10)
+    await buyersStore.fetchBuyers(buyersStore.currentPage, buyersStore.limit)
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось создать покупателя' })
   }
@@ -294,7 +302,7 @@ const handleUpdate = async () => {
     await buyersStore.updateBuyer(selectedBuyer.value.id, selectedBuyer.value)
     toast.add({ severity: 'success', summary: 'Успех', detail: 'Покупатель обновлен' })
     showEditDialog.value = false
-    await buyersStore.fetchBuyers(currentPage.value, 10)
+    await buyersStore.fetchBuyers(buyersStore.currentPage, buyersStore.limit)
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось обновить покупателя' })
   }
@@ -304,14 +312,19 @@ const handleDelete = async (id: number) => {
   try {
     await buyersStore.deleteBuyer(id)
     toast.add({ severity: 'success', summary: 'Успех', detail: 'Покупатель удален' })
-    await buyersStore.fetchBuyers(currentPage.value, 10)
+    await buyersStore.fetchBuyers(buyersStore.currentPage, buyersStore.limit)
   } catch (error) {
     toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось удалить покупателя' })
   }
 }
 
-const formatEmails = (row: Buyer) => row.emails.join(', ')
-const formatPhones = (row: Buyer) => row.phones.join(', ')
+const formatEmails = (row: Buyer) =>
+    row.emails.map(
+        email => {
+          return email.email
+        }).join(', ')
+const formatPhones = (row: Buyer) => row.phones.map(phone => {return phone}).join(', ')
+const formatComments = (row: Buyer) => row.comments.map(comment => {return comment}).join(', ')
 
 const actionBody = (row: Buyer) => {
   return `
@@ -334,49 +347,24 @@ const actionBody = (row: Buyer) => {
 
 }
 
+
+
 onMounted(async () => {
-  await buyersStore.fetchBuyers(currentPage.value, 10)
-  buyers.value = buyersStore.buyers ? buyersStore.buyers : []
-      total.value = buyersStore.total ? buyersStore.total : 0
+  await buyersStore.fetchBuyers(buyersStore.currentPage, buyersStore.limit)
 })
 
-// Define the schema for FormKit
-const buyerSchema = {
-  fields: [
-    {
-      type: 'text',
-      name: 'name',
-      label: 'Имя',
-      validation: 'required|length:3'
-    },
-    {
-      type: 'email',
-      name: 'emails',
-      label: 'Email',
-      validation: 'required|email',
-      multiple: true
-    },
-    {
-      type: 'tel',
-      name: 'phones',
-      label: 'Телефоны',
-      validation: 'required',
-      multiple: true
-    },
-    {
-      type: 'text',
-      name: 'address',
-      label: 'Адрес',
-      multiple: true
+// Слежение за изменениями в store для обновления локальных данных
+watch(
+    () => [buyersStore.buyers, buyersStore.total, buyersStore.currentPage, buyersStore.limit],
+    () => {
+      // Если необходимо, можно выполнить дополнительные действия при изменении данных
     }
-  ]
-}
+)
 
-// Toggle the create dialog
-function toggleCreateDialog() {
-  showCreateDialog.value = !showCreateDialog.value
+// Валидационная схема для SearchForm если требуется (например, для поиска по форме)
+const validationSchema = {
+  // Определите схему валидации по необходимости
 }
-
 </script>
 
 <style scoped>

@@ -1,23 +1,25 @@
 // stores/buyers.ts
 
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { apiFetch } from '~/composables/apiFetch'
-import type {PaginatedResponse} from "~/components/scripts/pagination";
 
 export interface Buyer {
   id: number
   name: string
-  numberName: string
+  numberName?: string
   emails: string[]
   phones: string[]
   address: string[]
-  googleContactId?: string
-  createdAt: string
-  updatedAt: string
+  comments: string[]
 }
 
-
+interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 export const useBuyersStore = defineStore('buyers', () => {
   const buyers = ref<Buyer[]>([])
@@ -25,7 +27,7 @@ export const useBuyersStore = defineStore('buyers', () => {
   const currentPage = ref(1)
   const limit = ref(10)
   const searchQuery = ref('') // Для поиска по строке
-  const searchFormFilters = ref({}) // Для поиска по форме
+  const searchFormFilters = ref<Record<string, any>>({}) // Для поиска по форме
 
   const fetchBuyers = async (page: number = 1, limitPerPage: number = 10) => {
     try {
@@ -37,6 +39,9 @@ export const useBuyersStore = defineStore('buyers', () => {
       total.value = data.total
       currentPage.value = data.page
       limit.value = data.limit
+      // Сбрасываем поисковые параметры при общем запросе
+      searchQuery.value = ''
+      searchFormFilters.value = {}
     } catch (error) {
       console.error('Ошибка при получении покупателей:', error.response?._data || error)
     }
@@ -53,6 +58,7 @@ export const useBuyersStore = defineStore('buyers', () => {
       currentPage.value = data.page
       limit.value = data.limit
       searchQuery.value = search
+      searchFormFilters.value = {}
     } catch (error) {
       console.error('Ошибка при поиске покупателей по строке:', error.response?._data || error)
     }
@@ -69,6 +75,7 @@ export const useBuyersStore = defineStore('buyers', () => {
       currentPage.value = data.page
       limit.value = data.limit
       searchFormFilters.value = filters
+      searchQuery.value = ''
     } catch (error) {
       console.error('Ошибка при поиске покупателей по форме:', error.response?._data || error)
     }
@@ -80,7 +87,7 @@ export const useBuyersStore = defineStore('buyers', () => {
         method: 'POST',
         body: buyerData,
       })
-      buyers.value.push(data)
+      buyers.value.unshift(data) // Добавляем в начало списка
       total.value++
     } catch (error) {
       console.error('Ошибка при создании покупателя:', error.response?._data || error)
@@ -96,7 +103,7 @@ export const useBuyersStore = defineStore('buyers', () => {
       })
       const index = buyers.value.findIndex(b => b.id === id)
       if (index !== -1) {
-        buyers.value[index] = data.data
+        buyers.value[index] = data // Предполагается, что сервер возвращает обновлённого покупателя
       }
     } catch (error) {
       console.error('Ошибка при обновлении покупателя:', error.response?._data || error)

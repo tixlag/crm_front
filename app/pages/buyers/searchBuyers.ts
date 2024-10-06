@@ -1,5 +1,8 @@
 import {apiFetch} from "~/composables/apiFetch";
 
+import {useBuyersStore} from "~/stores/buyers";
+
+
 export const buyersFields = [
     {
         type: 'primeInputText',
@@ -61,7 +64,32 @@ const handleBuyersSearchForm = async (formData) => {
     }
 };
 
- export const searchHandlers = {
-     handleSearchByForm: handleBuyersSearchForm,
-     handleSearchByString: handleBuyersSearchString
+
+
+
+ const test = () => {
+
+
+     const handlePageChange = (newPage: number) => {
+         const buyersStore = useBuyersStore()
+         buyersStore.currentPage = newPage
+     }
+// Обработчики поиска
+
+     const handleSearchForm = async ({ values, page, limit }) => {
+         const buyersStore = useBuyersStore()
+         await buyersStore.searchBuyersByForm(values, page, limit)
+     }
+     const handleSearchString = async ({ search, page, limit }) => {
+         const buyersStore = useBuyersStore()
+         await buyersStore.searchBuyersByString(search, page, limit)
+     }
+     return {
+         handleSearchForm: handleSearchForm,
+         handleSearchString: handleSearchString,
+         handlePageChange: handlePageChange
+     }
+
  }
+
+ export const formHandlers = test()

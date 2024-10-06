@@ -86,7 +86,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (!token.value?.refreshToken) return false
 
         try {
-            const response = await $fetch('/auth/refresh-token', {
+            const response = await $fetch('/api/auth/refresh-token', {
                 method: 'POST',
                 body: {refreshToken: token.value.refreshToken},
             })
@@ -94,7 +94,7 @@ export const useAuthStore = defineStore('auth', () => {
             return true
         } catch (error) {
             console.error('Ошибка обновления токена:', error)
-            logout()
+            // logout()
             return false
         }
     }
