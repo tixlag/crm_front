@@ -4,6 +4,7 @@ const { menu } = useNavigationMenu()
 
 const collapsed = useState<boolean>('collapsed')
 const isOnMobile = useState<boolean>('isOnMobile')
+const auth = useAuthStore()
 
 function onResize() {
   if (window.innerWidth <= 980) {
@@ -19,7 +20,11 @@ function onResize() {
 function onToggleCollapse() {
 }
 
-function onItemClick() {
+function onItemClick(event, item) {
+ console.log(item)
+  if (item.title == "Выйти") {
+    auth.logout().then(r => window.location.href = '/login')
+  }
 }
 
 onMounted(() => {
@@ -39,6 +44,7 @@ onMounted(() => {
       width-collapsed="50px"
       @update:collapsed="onToggleCollapse"
       @item-click="onItemClick"
+      theme=""
     >
       <template #header>
         <div v-if="!collapsed" class="flex">

@@ -7,8 +7,20 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2024-07-04',
 
-  ssr: true,
+  ssr: false,
   devtools: { enabled: true },
+
+  vite: {
+    server: {
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api/, '/api'),
+        },
+      },
+    },
+  },
 
   runtimeConfig: {
     public: {
@@ -16,6 +28,8 @@ export default defineNuxtConfig({
       APP_NAME: pkg.name,
       // eslint-disable-next-line node/prefer-global/process
       APP_MODE: process.env?.NODE_ENV,
+      apiBase: '/api',
+      baseURL: process.env.API_URL || 'http://localhost:3000/'
     },
   },
 
@@ -30,6 +44,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/fonts',
     '@formkit/nuxt',
+    // ['@nuxtjs/proxy', { pathRewrite: { '^/ api': '/ api/ v1' } }],
 
   ],
 
@@ -48,9 +63,10 @@ export default defineNuxtConfig({
   i18n: {
     lazy: true,
     langDir: 'locales',
-    defaultLocale: 'en',
+    defaultLocale: 'ru',
     strategy: 'no_prefix',
     locales: [
+      { code: 'ru', file: 'ru.json', name: 'Russian' },
       { code: 'en', file: 'en.json', name: 'English' },
       { code: 'de', file: 'de.json', name: 'German' },
     ],
@@ -86,5 +102,20 @@ export default defineNuxtConfig({
     client: false,
     server: false,
   },
+  // proxy: {
+  //   '/api/': {
+  //     target: 'http://localhost:3001/', // Адрес вашего backend
+  //     pathRewrite: { '^/api/': '' },
+  //     changeOrigin: true,
+  //     secure: false,
+  //   },
+  // },
+  // runtimeConfig: {
+  //   public: {
+  //     apiBase: '/api', // Базовый путь для API
+  //   },
+  // },
+
+
 
 })

@@ -7,9 +7,13 @@ $borderRadius: 12px;
 html {
   font-size: 16px;
 }
+h2 {
+  margin-block: 0.5rem;
+}
 
 #workspace {
   padding-left: 180px;
+  transition: .3s;
   a {
     text-decoration: none;
     color: var(--p-primary-color);
@@ -54,3 +58,4 @@ html {
     color: var(--p-primary-color);
   }
 }
+

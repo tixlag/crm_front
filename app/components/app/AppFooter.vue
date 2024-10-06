@@ -9,3 +9,5 @@ const config = useRuntimeConfig()
 </template>
 
 <style lang="scss" scoped></style>
+
+
