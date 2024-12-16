@@ -1,18 +1,25 @@
 <script setup lang="ts">
-function redirectToGithub() {
-  window.open('https://github.com/sfxcode/nuxt3-primevue-starter', '_blank')
-}
+import AppThemeSwitcher from "~/components/app/AppThemeSwitcher.vue";
+const themeStore = useThemeStore()
+const auth = useAuthStore()
 </script>
 
 <template>
   <nav>
     <Toolbar>
-      <template #start />
-
+      <template #start >
+        <Button v-if="themeStore.isOnMobile" @click="themeStore.collapsed = !themeStore.collapsed" class="custom-toggle-btn">
+          <i class="pi pi-bars"/>
+        </Button>
+      </template>
+      <template #center >
+        <Image src="/svg/crm-logo.svg" width="100%" style="width: 3rem" />
+      </template>
       <template #end>
-        <AppColorMode class="ml-6 mr-2" />
-        <Button icon="pi pi-github" class="mr-2" @click="redirectToGithub" />
-        <Button icon="pi pi-sign-out" severity="danger" />
+
+        <AppThemeSwitcher />
+<!--        <Button icon="pi pi-github" class="mr-2" @click="redirectToGithub" />-->
+        <Button v-if="auth.user" icon="pi pi-sign-out" @click="auth.logout().then(() => navigateTo('/login'))" severity="danger" />
       </template>
     </Toolbar>
   </nav>

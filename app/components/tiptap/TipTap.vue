@@ -49,10 +49,11 @@ onBeforeUnmount(() => {
   editor.value?.destroy()
   editor.value = null
 })
+defineExpose({ editor }) // Экспортируем экземпляр редактора
 </script>
 
 <template>
-  <div v-if="editor">
+  <div v-if="editor" class="flex flex-col">
     <Toolbar id="toolbar">
       <template #start>
         <Button
@@ -134,13 +135,13 @@ onBeforeUnmount(() => {
           :class="{ 'p-button-outlined': !editor.isActive('bulletList') }"
           @click="editor.chain().focus().toggleBulletList().run()"
         />
-        <Button
-          size="small"
-          icon="pi pi-code"
-          icon-only
-          :class="{ 'p-button-outlined': !editor.isActive('codeBlock') }"
-          @click="editor.chain().focus().toggleCodeBlock().run()"
-        />
+<!--        <Button-->
+<!--          size="small"-->
+<!--          icon="pi pi-code"-->
+<!--          icon-only-->
+<!--          :class="{ 'p-button-outlined': !editor.isActive('codeBlock') }"-->
+<!--          @click="editor.chain().focus().toggleCodeBlock().run()"-->
+<!--        />-->
         <Button
           size="small"
           icon="pi pi-minus"
@@ -209,7 +210,7 @@ onBeforeUnmount(() => {
         />
       </template>
     </Toolbar>
-    <EditorContent :editor="editor" class="p-tiptap p-inputtext" />
+    <EditorContent :editor="editor" class="flex cursor-text p-tiptap p-inputtext min-h-10rem" />
   </div>
 </template>
 

@@ -32,7 +32,7 @@ onMounted(async () => {
       :rows="8"
       paginator-template="CurrentPageReport FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink RowsPerPageDropdown"
       :rows-per-page-options="[8, 15, 50]"
-      current-page-report-template="Showing {first} to {last} of {totalRecords}"
+      current-page-report-template="Showing {first} по {last} из {totalRecords}"
     >
       <template #header>
         <div class="datatable-header">

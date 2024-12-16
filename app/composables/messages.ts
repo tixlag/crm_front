@@ -9,9 +9,11 @@ export enum MessageSeverity {
 }
 
 export function useMessages() {
+  // const { vueApp } = useNuxtApp()
+  // const toast = vueApp.config.globalProperties.$toast
   const toast = useToast()
 
-  function showMessage(severity: ToastMessageOptions['severity'], summary: string, detail: string, life: number = 3000) {
+  function showMessage(severity: ToastMessageOptions['severity'], summary: string, detail: string, life: number = 10000) {
     toast.add({ severity, summary, detail, life })
   }
 
@@ -23,13 +25,24 @@ export function useMessages() {
     showMessage(MessageSeverity.INFO, summary, detail, life)
   }
 
-  function showWarnMessage(summary: string, detail: string = summary, life: number = 3000) {
+  function showWarnMessage(summary: string, detail: string = summary, life: number = 10000) {
     showMessage(MessageSeverity.WARN, summary, detail, life)
   }
 
-  function showErrorMessage(summary: string, detail: string = summary, life: number = 3000) {
+  function showErrorMessage(summary: string, detail: string = summary, life: number = 10000) {
     showMessage(MessageSeverity.ERROR, summary, detail, life)
   }
+  function add(params:{severity: ToastMessageOptions['severity'], summary: string, detail: string, life?: number, group?: string}, life: number = 10000) {
 
-  return { showSuccessMessage, showInfoMessage, showWarnMessage, showErrorMessage }
+    if (!params.life) {
+      if (params.severity == MessageSeverity.SUCCESS) {
+        params.life = 3000
+      } else {
+        params.life = life;
+      }
+    }
+    toast.add(params)
+  }
+
+  return { showSuccessMessage, showInfoMessage, showWarnMessage, showErrorMessage, add }
 }

@@ -1,48 +1,53 @@
-import { useConfirm } from '#imports'
-
 export function useConfirmation() {
+  // const { vueApp } = useNuxtApp()
+  // const confirm = vueApp.config.globalProperties.$confirm
   const confirm = useConfirm()
-  const { showSuccessMessage, showInfoMessage } = useMessages()
+  const { showSuccessMessage, showInfoMessage, showErrorMessage,} = useMessages()
 
   // eslint-disable-next-line unused-imports/no-unused-vars
-  function doNothing(id: any) {
+  function doNothing(id?: any) {
   }
 
-  function confirmDelete(idToDelete: any, acceptCallback: (id: any) => void, rejectCallback: (id: any) => void = doNothing) {
-    confirm.require({
-      message: 'Should this entry be deleted ?',
-      header: 'Are you sure',
+  function confirmDelete(idToDelete: any, acceptCallback: (id: any) => void, warningText = 'Удалить?', rejectCallback: (id: any) => void = doNothing) {
+    return confirm.require({
+      message: warningText,
+      header: 'Вы уверены',
       icon: 'pi pi-info-circle',
-      rejectLabel: 'Cancel',
-      acceptLabel: 'Delete',
+      rejectLabel: 'Отмена',
+      acceptLabel: 'Удалить',
       rejectClass: 'p-button-secondary p-button-outlined',
       acceptClass: 'p-button-danger',
-      accept: () => {
-        showSuccessMessage('Action confirmed', `Entry with ID ${idToDelete} was deleted`)
-        acceptCallback(idToDelete)
+      accept: async () => {
+        try {
+          await acceptCallback(idToDelete)
+          showSuccessMessage('Успех', `Строка с ID ${idToDelete} удалена`)
+        } catch (e) {
+          showErrorMessage('Ошибка', `Ошибка при удалении ID ${idToDelete}.  + (e.data.message ?? e)`)
+        }
+
       },
       reject: () => {
-        showInfoMessage('Action cancelled', 'No changes are processed')
+        showInfoMessage('Отмена', 'Удаление отменено')
         rejectCallback(idToDelete)
       },
     })
   }
 
-  function confirmAction(acceptCallback: () => void, acceptMessage: string = 'Action confirmed', acceptMessageDetail: string = acceptMessage, header: string = 'Attention', message: string = 'Should proceed with this action ?') {
+  function confirmAction(acceptCallback: () => void, rejectCallback: () => void = doNothing, message: string = 'Вы уверены?', header: string = 'Внимание', acceptButtonClass = 'p-button-success') {
     confirm.require({
       message,
       header,
       icon: 'pi pi-info-circle',
-      rejectLabel: 'Cancel',
-      acceptLabel: 'Accept',
+      rejectLabel: 'Отмена',
+      acceptLabel: 'Да',
       rejectClass: 'p-button-secondary p-button-outlined',
-      acceptClass: 'p-button-success',
+      acceptClass: acceptButtonClass,
       accept: () => {
         acceptCallback()
-        showInfoMessage(acceptMessage, acceptMessageDetail)
       },
       reject: () => {
-        showInfoMessage('Action cancelled')
+        rejectCallback()
+        showInfoMessage('Заказ не записан на сервер')
       },
     })
   }

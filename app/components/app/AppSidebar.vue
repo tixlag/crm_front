@@ -1,72 +1,80 @@
 <script setup lang='ts'>
+
+import AppThemeSwitcher from "~/components/app/AppThemeSwitcher.vue";
+
 const config = useRuntimeConfig()
 const { menu } = useNavigationMenu()
 
-const collapsed = useState<boolean>('collapsed')
-const isOnMobile = useState<boolean>('isOnMobile')
 const auth = useAuthStore()
+const themeStore = useThemeStore()
 
-function onResize() {
-  if (window.innerWidth <= 980) {
-    collapsed.value = true
-    isOnMobile.value = true
-  }
-  else {
-    collapsed.value = false
-    isOnMobile.value = false
-  }
-}
+
+
+// function onResize() {
+//   if (window.innerWidth <= 980) {
+//     themeStore.collapsed = true
+//     themeStore.isOnMobile = true
+//   }
+//   else {
+//     themeStore.collapsed = true
+//     themeStore.isOnMobile = false
+//   }
+// }
 
 function onToggleCollapse() {
+
 }
 
 function onItemClick(event, item) {
- console.log(item)
+  if (themeStore.isOnMobile) {
+    themeStore.collapsed = !themeStore.collapsed;
+  }
   if (item.title == "Выйти") {
     auth.logout().then(r => window.location.href = '/login')
   }
 }
 
-onMounted(() => {
-  onResize()
-  window.addEventListener('resize', onResize)
-})
+// onMounted(() => {
+//   console.log('Mounted AppSidebar')
+//   onResize()
+//   window.addEventListener('resize', onResize)
+// })
 </script>
 
 <template>
-  <div>
+  <div v-if="menu.length">
     <sidebar-menu
-      v-model:collapsed="collapsed"
+      v-model:collapsed="themeStore.collapsed"
       link-component-name="nuxt-sidebar-link"
       :menu="menu"
       :show-one-child="true"
       width="180px"
-      width-collapsed="50px"
+      :width-collapsed="themeStore.isOnMobile && themeStore.collapsed ? '0' : '50px'"
       @update:collapsed="onToggleCollapse"
       @item-click="onItemClick"
       theme=""
+      :class="{ mobile: themeStore.isOnMobile }"
     >
       <template #header>
-        <div v-if="!collapsed" class="flex">
-          <img class="m-6 w-8" src="/primevue-logo.webp" alt="PrimeVue">
-          <img class="m-6 w-8" src="/nuxt-logo.svg" alt="Nuxt">
+        <div v-if="!themeStore.collapsed" class="flex justify-center">
+<!--<AppConfigurator />-->
+
         </div>
-        <div v-else>
-          <img class="ml-4 mt-6 w-6" src="/primevue-logo.webp" alt="PrimeVue">
-          <img class="ml-4 mt-2 w-6" src="/nuxt-logo.svg" alt="Nuxt">
+        <div v-else  @click="themeStore.collapsed = false" style="cursor: pointer">
+          <img class="ml-4 mt-6 w-6" :src="'/primevue-logo.webp'" alt="PrimeVue">
         </div>
       </template>
       <template #footer>
         <div class="m-2 text-center text-xs text-color-primary">
-          <span v-if="!collapsed">MongoCamp Admin {{ config.public.APP_VERSION }}</span>
-          <span v-if="collapsed">{{ config.public.APP_VERSION }}</span>
+          <span v-if="!themeStore.collapsed">New CRM {{ config.public.APP_VERSION }}</span>
+          <span v-if="themeStore.collapsed">{{ config.public.APP_VERSION }}</span>
         </div>
       </template>
     </sidebar-menu>
     <div
-      v-if="isOnMobile && !collapsed"
+      v-if="themeStore.isOnMobile && !themeStore.collapsed"
       class="sidebar-overlay"
-      @click="collapsed = true"
+      @click="themeStore.collapsed = true"
     />
   </div>
 </template>

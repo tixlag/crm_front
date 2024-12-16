@@ -18,11 +18,15 @@ interface User {
     isAccountDisabled: boolean
     createdAt: string
     updatedAt: string
+    settings: {},
+    deliverymanCanSee_deliveryType: [],
+    deliverymanCanSee_orderStatus: [],
 }
 
 export const useAuthStore = defineStore('auth', () => {
     const token = ref<AuthToken | null>(null)
     const user = ref<User | null>(null)
+
 
     const setToken = (newToken: AuthToken) => {
         token.value = newToken
@@ -77,6 +81,7 @@ export const useAuthStore = defineStore('auth', () => {
         // Очистка токенов и данных пользователя
         token.value = null
         user.value = null
+        pageIsBlock.value = false
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
@@ -84,9 +89,9 @@ export const useAuthStore = defineStore('auth', () => {
 
     const refreshToken = async () => {
         if (!token.value?.refreshToken) return false
-
+        const config = useRuntimeConfig();
         try {
-            const response = await $fetch('/api/auth/refresh-token', {
+            const response = await $fetch(`${config.public.apiBase}` + '/auth/refresh-token', {
                 method: 'POST',
                 body: {refreshToken: token.value.refreshToken},
             })
@@ -101,9 +106,28 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = () => !!token.value?.accessToken
 
+    const pageIsBlock = ref<Boolean>()
+    const setPageIsBlock = (val: boolean) => pageIsBlock.value = val
+
+    const confirmMessage = ref<String>()
+    const confirmHeader = ref<String>()
+    const inviteToLogin = (message: string, header: string) => {
+        pageIsBlock.value = true
+        confirmMessage.value = message
+        confirmHeader.value = header
+    }
+
     return {
         token,
         user,
+        pageIsBlock,
+
+        //показываем сообщение про проблемах с логином
+        setPageIsBlock,
+        confirmMessage,
+        confirmHeader,
+        inviteToLogin,
+
         setToken,
         setUser,
         login,
@@ -111,5 +135,6 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         refreshToken,
         isAuthenticated,
+
     }
 })

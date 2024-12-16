@@ -43,9 +43,22 @@ $icon-width: 32px ;
 
 @import "vue-sidebar-menu/src/scss/vue-sidebar-menu.scss";
 
-.v-sidebar-menu hr {
-  margin-bottom: 8px;
-  background-color: $item-hover-bg;
-  border: 0 none;
-  height: 0.1rem;
+.v-sidebar-menu{
+  transition: .3s;
+  hr {
+    margin-bottom: 8px;
+    background-color: $item-hover-bg;
+    border: 0 none;
+    height: 0.1rem;
+  }
 }
+.vsm_collapsed {
+  &.mobile {
+overflow: hidden;
+
+  }
+
+
+    //max-width: 0;
+    //display: none;
+  }

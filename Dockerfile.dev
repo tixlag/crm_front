@@ -1,0 +1,28 @@
+# Development Dockerfile
+ARG NODE_VERSION=20.16.0
+FROM node:${NODE_VERSION}-slim as dev
+
+ARG PORT=3000
+ENV PORT=$PORT
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
+# Включаем corepack для использования pnpm
+RUN corepack enable
+
+WORKDIR /app
+
+# Копируем файлы package.json и pnpm-lock.yaml
+COPY package*.json pnpm-lock.yaml ./
+
+# Устанавливаем зависимости
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install
+
+# Копируем исходный код
+COPY . .
+
+# Открываем порт
+EXPOSE $PORT
+
+# Запускаем в режиме разработки
+CMD ["pnpm", "dev"]

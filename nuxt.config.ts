@@ -9,15 +9,25 @@ export default defineNuxtConfig({
 
   ssr: false,
   devtools: { enabled: true },
+  devServer: {
+    host: 'localhost.com',
+    port: 3000,
+    https: {
+      key: './localhost-key.pem',
+      cert: './localhost-cert.pem',
+    },
+  },
 
   vite: {
+    // фиксит баг с компонентом Editor
+    optimizeDeps: {
+      include: ['quill'],
+    },
+
     server: {
-      proxy: {
-        '/api': {
-          target: 'http://localhost:3001',
-          changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '/api'),
-        },
+      https: {
+        key: './localhost-key.pem',
+        cert: './localhost-cert.pem',
       },
     },
   },
@@ -28,7 +38,7 @@ export default defineNuxtConfig({
       APP_NAME: pkg.name,
       // eslint-disable-next-line node/prefer-global/process
       APP_MODE: process.env?.NODE_ENV,
-      apiBase: '/api',
+      apiBase: 'https://localhost:3001',
       baseURL: process.env.API_URL || 'http://localhost:3000/'
     },
   },
@@ -43,14 +53,10 @@ export default defineNuxtConfig({
     '@nuxt/test-utils/module',
     '@nuxt/image',
     '@nuxt/fonts',
-    '@formkit/nuxt',
     // ['@nuxtjs/proxy', { pathRewrite: { '^/ api': '/ api/ v1' } }],
 
   ],
 
-  formkit: {
-    autoImport: true,
-  },
 
   content: {
     highlight: {
@@ -74,15 +80,17 @@ export default defineNuxtConfig({
   },
 
   primevue: {
-    autoImport: false,
+    autoImport: true,
     components: {
+      include: ['ConfirmDialog', 'Toast'],
       exclude: ['Chart', 'Editor'],
     },
     options: {
       theme: {
         preset: Aura,
         options: {
-          darkModeSelector: '.dark',
+          darkModeSelector: '.app-dark',
+          ripple: true,
         },
       },
       ripple: true,
@@ -90,17 +98,18 @@ export default defineNuxtConfig({
   },
 
   css: [
-    'primeicons/primeicons.css',
-    '@sfxcode/formkit-primevue/dist/sass/formkit-primevue.scss',
+    'primeicons/primeicons.css'
   ],
 
   build: {
-    transpile: ['nuxt', 'primevue', 'formkit-primevue'],
+    // transpile: ['nuxt', 'primevue'],
+    transpile: ['nuxt', 'primevue', '@primevue/themes'],
+    // transpile: ['nuxt', 'formkit-primevue'],
   },
 
   sourcemap: {
-    client: false,
-    server: false,
+    client: true,
+    server: true,
   },
   // proxy: {
   //   '/api/': {
@@ -115,7 +124,9 @@ export default defineNuxtConfig({
   //     apiBase: '/api', // Базовый путь для API
   //   },
   // },
-
-
+// фиксит баг с компонентом Editor
+//   alias: {
+//     'quill': process.dev ? 'quill/dist/quill.js' : 'quill'
+//   },
 
 })
